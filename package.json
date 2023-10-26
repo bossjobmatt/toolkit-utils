@@ -2,14 +2,10 @@
   "name": "@bossjobmatt/toolkit-utils",
   "version": "1.0.0",
   "description": "",
-  "private":"false",
   "main": "index.js",
   "files": ["index.js"],
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
-  },
-  "publishConfig": {
-    "@bossjobmatt:registry": "https://npm.pkg.github.com"
   },
   "author": "",
   "license": "ISC"
