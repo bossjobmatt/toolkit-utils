@@ -3,6 +3,9 @@ name: Publish package to GitHub Packages
 on:
   release:
     types: [published]
+  main:
+    types: [push]  
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -18,12 +21,12 @@ jobs:
           registry-url: 'https://npm.pkg.github.com'
       - run: npm ci
 
-      - name: Build and publish toolkit-cli
-        run: |
-            cd packages/toolkit-cli
-            npm publish --access public
-        env:
-            NODE_AUTH_TOKEN: ${{ secrets.NPM_GITHUB_TOKEN }}  
+      # - name: Build and publish toolkit-cli
+      #   run: |
+      #       cd packages/toolkit-cli
+      #       npm publish --access public
+      #   env:
+      #       NODE_AUTH_TOKEN: ${{ secrets.NPM_GITHUB_TOKEN }}  
 
       - name: Build and publish toolkit-utils
         run: |
