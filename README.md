@@ -4,6 +4,8 @@
 
 ## Install package
 
+- create `.npmrc` file
+
 ```bash
 @bossjobmatt:registry=https://npm.pkg.github.com
 //npm.pkg.github.com/:_authToken=YOUR_GITHUB_ACCESS_TOKEN
