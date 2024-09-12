@@ -30,7 +30,7 @@ jobs:
 
       - name: Build and publish toolkit-utils
         run: |
-            cd ../toolkit-utils
+            cd packages/toolkit-utils
             npm publish --access public
         env:
             NODE_AUTH_TOKEN: ${{ secrets.NPM_GITHUB_TOKEN }}  
