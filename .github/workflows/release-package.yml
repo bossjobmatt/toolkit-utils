@@ -33,9 +33,9 @@ jobs:
 
       - name: Build and publish toolkit-utils
         run: |
-            pwd
             cd packages/toolkit-utils
             CURRENT_VERSION=$(node -p "require('./package.json').version")
+            echo $CURRENT_VERSION
             PUBLISHED_VERSION=$(npm view . version) || true
             if [ "$CURRENT_VERSION" != "$PUBLISHED_VERSION" ]; then
               npm publish --access public
