@@ -24,7 +24,9 @@ jobs:
         run: |
             cd packages/toolkit-cli
             CURRENT_VERSION=$(node -p "require('./package.json').version")
+            echo "current version: $CURRENT_VERSION"
             PUBLISHED_VERSION=$(npm view . version) || true
+            echo "published version: $PUBLISHED_VERSION"
             if [ "$CURRENT_VERSION" != "$PUBLISHED_VERSION" ]; then
               npm publish --access public
             fi
@@ -35,8 +37,9 @@ jobs:
         run: |
             cd packages/toolkit-utils
             CURRENT_VERSION=$(node -p "require('./package.json').version")
-            echo $CURRENT_VERSION
+            echo "current version: $CURRENT_VERSION"
             PUBLISHED_VERSION=$(npm view . version) || true
+            echo "published version: $PUBLISHED_VERSION"
             if [ "$CURRENT_VERSION" != "$PUBLISHED_VERSION" ]; then
               npm publish --access public
             fi
