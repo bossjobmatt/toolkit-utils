@@ -1,1 +1,1 @@
-console.log('hello from toolkit-cli');
+console.log('hello from toolkit-cli!');
