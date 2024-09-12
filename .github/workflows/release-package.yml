@@ -20,16 +20,16 @@ jobs:
           registry-url: 'https://npm.pkg.github.com'
       - run: npm ci
 
-      # - name: Build and publish toolkit-cli
-      #   run: |
-      #       cd packages/toolkit-cli
-      #       npm publish --access public
-      #   env:
-      #       NODE_AUTH_TOKEN: ${{ secrets.NPM_GITHUB_TOKEN }}  
+      - name: Build and publish toolkit-cli
+        run: |
+            cd packages/toolkit-cli
+            npm publish --access public
+        env:
+            NODE_AUTH_TOKEN: ${{ secrets.NPM_GITHUB_TOKEN }}  
 
       - name: Build and publish toolkit-utils
         run: |
-            cd packages/toolkit-utils
+            cd ../toolkit-utils
             npm publish --access public
         env:
             NODE_AUTH_TOKEN: ${{ secrets.NPM_GITHUB_TOKEN }}  
