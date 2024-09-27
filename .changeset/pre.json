@@ -6,6 +6,7 @@
     "@bossjobmatt/toolkit-utils": "1.0.5"
   },
   "changesets": [
+    "lucky-ears-push",
     "red-shoes-wash"
   ]
 }
