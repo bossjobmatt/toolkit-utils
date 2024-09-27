@@ -67,10 +67,12 @@ jobs:
       - name: Create Release Pull Request or Publish to Github Packages
         id: changesets
         uses: changesets/action@v1
+        with:
+          publish: pnpm release
         env:
           GITHUB_TOKEN: ${{ secrets.NPM_GITHUB_TOKEN }}
 
-      - name: Publish
-        if: steps.changesets.outputs.hasChangesets == 'false'
-        # You can do something when a publish should happen.
-        run: pnpm release
+      # - name: Publish
+      #   if: steps.changesets.outputs.hasChangesets == 'false'
+      #   # You can do something when a publish should happen.
+      #   run: pnpm release
