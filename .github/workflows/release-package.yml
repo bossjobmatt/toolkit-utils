@@ -17,34 +17,6 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '20.x'
-          # registry-url: 'https://npm.pkg.github.com'
-      # - run: pnpm install
-
-      # - name: Build and publish toolkit-cli
-      #   run: |
-      #       cd packages/toolkit-cli
-      #       CURRENT_VERSION=$(node -p "require('./package.json').version")
-      #       echo "current version: $CURRENT_VERSION"
-      #       PUBLISHED_VERSION=$(npm view . version) || true
-      #       echo "published version: $PUBLISHED_VERSION"
-      #       if [ "$CURRENT_VERSION" != "$PUBLISHED_VERSION" ]; then
-      #         npm publish --access public
-      #       fi
-      #   env:
-      #       NODE_AUTH_TOKEN: ${{ secrets.NPM_GITHUB_TOKEN }}  
-
-      # - name: Build and publish toolkit-utils
-      #   run: |
-      #       cd packages/toolkit-utils
-      #       CURRENT_VERSION=$(node -p "require('./package.json').version")
-      #       echo "current version: $CURRENT_VERSION"
-      #       PUBLISHED_VERSION=$(npm view . version) || true
-      #       echo "published version: $PUBLISHED_VERSION"
-      #       if [ "$CURRENT_VERSION" != "$PUBLISHED_VERSION" ]; then
-      #         npm publish --access public
-      #       fi
-      #   env:
-      #       NODE_AUTH_TOKEN: ${{ secrets.NPM_GITHUB_TOKEN }}  
 
       - name: install pnpm
         run: npm i pnpm@latest -g
@@ -71,8 +43,3 @@ jobs:
           publish: pnpm release
         env:
           GITHUB_TOKEN: ${{ secrets.NPM_GITHUB_TOKEN }}
-
-      # - name: Publish
-      #   if: steps.changesets.outputs.hasChangesets == 'false'
-      #   # You can do something when a publish should happen.
-      #   run: pnpm release
