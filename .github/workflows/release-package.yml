@@ -20,28 +20,51 @@ jobs:
           registry-url: 'https://npm.pkg.github.com'
       - run: npm ci
 
-      - name: Build and publish toolkit-cli
-        run: |
-            cd packages/toolkit-cli
-            CURRENT_VERSION=$(node -p "require('./package.json').version")
-            echo "current version: $CURRENT_VERSION"
-            PUBLISHED_VERSION=$(npm view . version) || true
-            echo "published version: $PUBLISHED_VERSION"
-            if [ "$CURRENT_VERSION" != "$PUBLISHED_VERSION" ]; then
-              npm publish --access public
-            fi
-        env:
-            NODE_AUTH_TOKEN: ${{ secrets.NPM_GITHUB_TOKEN }}  
+      # - name: Build and publish toolkit-cli
+      #   run: |
+      #       cd packages/toolkit-cli
+      #       CURRENT_VERSION=$(node -p "require('./package.json').version")
+      #       echo "current version: $CURRENT_VERSION"
+      #       PUBLISHED_VERSION=$(npm view . version) || true
+      #       echo "published version: $PUBLISHED_VERSION"
+      #       if [ "$CURRENT_VERSION" != "$PUBLISHED_VERSION" ]; then
+      #         npm publish --access public
+      #       fi
+      #   env:
+      #       NODE_AUTH_TOKEN: ${{ secrets.NPM_GITHUB_TOKEN }}  
 
-      - name: Build and publish toolkit-utils
+      # - name: Build and publish toolkit-utils
+      #   run: |
+      #       cd packages/toolkit-utils
+      #       CURRENT_VERSION=$(node -p "require('./package.json').version")
+      #       echo "current version: $CURRENT_VERSION"
+      #       PUBLISHED_VERSION=$(npm view . version) || true
+      #       echo "published version: $PUBLISHED_VERSION"
+      #       if [ "$CURRENT_VERSION" != "$PUBLISHED_VERSION" ]; then
+      #         npm publish --access public
+      #       fi
+      #   env:
+      #       NODE_AUTH_TOKEN: ${{ secrets.NPM_GITHUB_TOKEN }}  
+
+      - name: Install Dependencies
+        run: pnpm install
+
+      # - name: Build Packages
+      #   run: pnpm run build
+
+      - name: Creating .npmrc
         run: |
-            cd packages/toolkit-utils
-            CURRENT_VERSION=$(node -p "require('./package.json').version")
-            echo "current version: $CURRENT_VERSION"
-            PUBLISHED_VERSION=$(npm view . version) || true
-            echo "published version: $PUBLISHED_VERSION"
-            if [ "$CURRENT_VERSION" != "$PUBLISHED_VERSION" ]; then
-              npm publish --access public
-            fi
+          cat << EOF > "$HOME/.npmrc"
+            @bossjobmatt:registry=https://npm.pkg.github.com
+            //npm.pkg.github.com/:_authToken=$GITHUB_TOKEN
+          EOF
         env:
-            NODE_AUTH_TOKEN: ${{ secrets.NPM_GITHUB_TOKEN }}  
+          GITHUB_TOKEN: ${{ secrets.NPM_GITHUB_TOKEN }}
+
+      - name: Create Release Pull Request or Publish to Github Packages
+        id: changesets
+        uses: changesets/action@v1
+        with:
+          publish: pnpm release
+        env:
+          GITHUB_TOKEN: ${{ secrets.NPM_GITHUB_TOKEN }}

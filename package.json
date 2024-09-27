@@ -1,14 +1,11 @@
 {
   "name": "@bossjobmatt/monorepo",
-  "version": "1.0.2",
+  "version": "0.0.1",
   "description": "",
   "private": true,
-  "main": "index.js",
-  "files": [
-    "index.js"
-  ],
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "build": "pnpm -r --filter='./packages/*' run build",
+    "release": "changeset publish"
   },
   "repository": {
     "url": "https://github.com/bossjobmatt/toolkit-utils.git"
@@ -18,6 +15,7 @@
   },
   "author": "",
   "license": "ISC",
-  "dependencies": {
+  "devDependencies": {
+    "@changesets/cli": "^2.27.8"
   }
 }
