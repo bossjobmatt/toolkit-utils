@@ -1,0 +1,11 @@
+{
+  "mode": "pre",
+  "tag": "beta",
+  "initialVersions": {
+    "@bossjobmatt/toolkit-cli": "1.0.3",
+    "@bossjobmatt/toolkit-utils": "1.0.5"
+  },
+  "changesets": [
+    "red-shoes-wash"
+  ]
+}
