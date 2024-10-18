@@ -1,0 +1,13 @@
+#!/bin/sh
+. "$(dirname "$0")/_/husky.sh"
+
+# 获取当前版本号
+VERSION=$(node -p "require('./packages/toolkit-utils/package.json').version")
+
+echo "v$VERSION"
+
+# 创建标签
+git tag -a "v$VERSION" -m "Release version $VERSION"
+
+# 推送标签到远程
+# git push origin "v$VERSION"
