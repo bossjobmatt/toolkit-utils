@@ -5,9 +5,7 @@
   "private": true,
   "scripts": {
     "build": "pnpm -r --filter='./packages/*' run build",
-    "release": "changeset publish",
-    "prepare": "husky || true",
-    "postpublish": "echo '🎉🎉🎉'"
+    "release": "changeset publish"
   },
   "repository": {
     "url": "https://github.com/bossjobmatt/toolkit-utils.git"
@@ -18,7 +16,6 @@
   "author": "",
   "license": "ISC",
   "devDependencies": {
-    "@changesets/cli": "^2.27.8",
-    "husky": "^9.1.6"
+    "@changesets/cli": "^2.27.8"
   }
 }
