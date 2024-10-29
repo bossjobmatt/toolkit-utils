@@ -1,0 +1,43 @@
+name: Tag on Version Change
+
+on:
+  push:
+    branches:
+      - main  # 或你使用的默认分支名
+    paths:
+      - 'package.json'
+
+jobs:
+  tag:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 0  # 确保获取所有历史和标签
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v2
+        with:
+          node-version: '14'
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Check if version changed
+        id: version_check
+        run: |
+          VERSION=$(node -p "require('./package.json').version")
+          echo "Current version: $VERSION"
+          GIT_TAG=$(git tag --list "v$VERSION")
+          echo "::set-output name=exists::$GIT_TAG"
+          echo "::set-output name=version::$VERSION"
+        shell: bash
+
+      - name: Create Git tag
+        if: steps.version_check.outputs.exists == ''
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git tag -a v${{ steps.version_check.outputs.version }} -m "Release v${{ steps.version_check.outputs.version }}"
+          git push origin v${{ steps.version_check.outputs.version }}
