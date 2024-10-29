@@ -16,14 +16,6 @@ jobs:
         with:
           fetch-depth: 0  # 确保获取所有历史和标签
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20.x'
-
-      - name: Install dependencies
-        run: npm install
-
       - name: Check if version changed
         id: version_check
         run: |
