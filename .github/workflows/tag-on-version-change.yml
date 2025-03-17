@@ -9,6 +9,7 @@ on:
 
 jobs:
   tag:
+    name: Create Tag
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
