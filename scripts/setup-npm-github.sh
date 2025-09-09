@@ -83,16 +83,15 @@ EOF
   source "$RC_FILE"
 fi
 
-# 4. 配置全局 ~/.npmrc（如果没有就写入）
-if ! grep -q "@${GITHUB_ORG_NAME}:registry" ~/.npmrc 2>/dev/null; then
-  cat <<EOF >> ~/.npmrc
-@${GITHUB_ORG_NAME}:registry=https://npm.pkg.github.com
-//npm.pkg.github.com/:_authToken=${NPM_TOKEN}
-EOF
-  echo "✅ 已写入 ~/.npmrc"
-else
-  echo "ℹ️  ~/.npmrc 已经有相关配置，跳过追加"
+# 4. 配置全局 ~/.npmrc（如果没有就创建后写入，如果有就覆写内容）
+if [ ! -f ~/.npmrc ]; then
+  echo "ℹ️ 正在创建 ~/.npmrc 文件"
 fi
+cat <<EOF > ~/.npmrc
+@${GITHUB_ORG_NAME}:registry=https://npm.pkg.github.com
+//npm.pkg.github.com/:_authToken=\${NPM_TOKEN}
+EOF
+echo "✅ 已写入 ~/.npmrc"
 
 
 # 5. 验证环境变量是否可用
