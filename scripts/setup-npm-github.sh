@@ -51,8 +51,6 @@ case "$CURRENT_SHELL" in
     ;;
   *)
     echo "⚠️ 检测到未适配的 shell: $CURRENT_SHELL"
-    echo "👉 将仅在当前会话里设置 NPM_TOKEN，不会写入配置文件"
-    export NPM_TOKEN="$(security find-generic-password -a "$USER" -s GITHUB_PACKAGES_NPM_TOKEN -w 2>/dev/null)"
     RC_FILE=""
     ;;
 esac
@@ -102,10 +100,14 @@ else
   echo "❌ NPM_TOKEN 未正确加载"
 fi
 
+
 # 6. 验证 npm 是否能正确登录
 echo "🔍 验证 npm whoami:"
 if GITHUB_PKG_NAME=$(npm whoami --registry=https://npm.pkg.github.com 2>/dev/null); then
   echo "✅ npm 登录验证成功，用户名: $GITHUB_PKG_NAME"
+  echo
+  echo "⚠️  请手动运行: source ~/.zshrc"
+  echo "   或者重新启动终端"
 else
   echo "❌ 登录验证失败，请检查 token 是否正确"
   exit 1
