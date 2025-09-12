@@ -1,20 +1,23 @@
 #!/usr/bin/env node
 
-// ...existing code...
-const { execSync, spawnSync } = require('child_process');
+/* eslint-disable no-console */
+const { execSync } = require('child_process');
 const fs = require('fs');
 const os = require('os');
 const path = require('path');
 
+// Fatal error helper: prints a message and exits with non-zero status.
 function fatal(msg) {
   console.error('❌', msg);
   process.exit(1);
 }
 
+// Only support macOS (darwin) for keychain operations.
 if (os.platform() !== 'darwin') {
   fatal('此脚本仅支持 macOS 系统');
 }
 
+// Graceful shutdown on signals
 ['SIGINT', 'SIGTERM'].forEach(sig => {
   process.on(sig, () => {
     console.error('\n❌ 脚本被中断');
@@ -22,36 +25,42 @@ if (os.platform() !== 'darwin') {
   });
 });
 
-// robust argument parsing (support --key=value and --key value)
-const rawArgs = process.argv.slice(2);
-const parsed = {};
-for (let i = 0; i < rawArgs.length; i++) {
-  const a = rawArgs[i];
-  if (!a.startsWith('--')) continue;
-  if (a.includes('=')) {
-    const [k, ...rest] = a.slice(2).split('=');
-    parsed[k] = rest.join('=');
-  } else {
-    const k = a.slice(2);
-    const next = rawArgs[i+1];
-    if (next && !next.startsWith('--')) {
-      parsed[k] = next;
-      i++;
+// Parse CLI arguments. Supports `--key=value` and `--key value` and flags.
+function parseArgs(argv) {
+  const raw = argv.slice(2);
+  const out = {};
+  for (let i = 0; i < raw.length; i++) {
+    const a = raw[i];
+    if (!a.startsWith('--')) continue;
+    if (a.includes('=')) {
+      const [k, ...rest] = a.slice(2).split('=');
+      out[k] = rest.join('=');
     } else {
-      parsed[k] = true;
+      const k = a.slice(2);
+      const next = raw[i + 1];
+      if (next && !next.startsWith('--')) {
+        out[k] = next;
+        i++;
+      } else {
+        out[k] = true;
+      }
     }
   }
+  return out;
 }
 
-let org = parsed.org || 'yolotechnology';
-let dryRun = Boolean(parsed['dry-run']);
-let tokenArg = parsed.token || '';
+const parsed = parseArgs(process.argv);
+const ORG_DEFAULT = 'yolotechnology';
+const org = parsed.org || ORG_DEFAULT;
+const dryRun = Boolean(parsed['dry-run']);
+const tokenArg = parsed.token || '';
 if (parsed.help || parsed.h) {
   console.log('Usage: setup-npm-github [--org ORG] [--dry-run] [--token TOKEN]');
   process.exit(0);
 }
 
-function readHidden(promptText) {
+// Read secret input from terminal without echoing characters.
+function readHidden() {
   return new Promise((resolve) => {
     const stdin = process.stdin;
     const stdout = process.stdout;
@@ -82,6 +91,7 @@ function readHidden(promptText) {
   });
 }
 
+// Simple yes/no prompt; default is No.
 function confirmPrompt(question) {
   return new Promise((resolve) => {
     const rl = require('readline').createInterface({ input: process.stdin, output: process.stdout });
@@ -93,20 +103,34 @@ function confirmPrompt(question) {
   });
 }
 
+// Determine user's RC file based on current shell.
+function detectRcFile() {
+  const shellPath = process.env.SHELL || '';
+  const currentShell = path.basename(shellPath);
+  if (currentShell === 'zsh') return path.join(os.homedir(), '.zshrc');
+  if (currentShell === 'bash') {
+    const bashrc = path.join(os.homedir(), '.bashrc');
+    const bashProfile = path.join(os.homedir(), '.bash_profile');
+    return fs.existsSync(bashrc) ? bashrc : bashProfile;
+  }
+  console.warn('⚠️ 检测到未适配的 shell:', currentShell);
+  return '';
+}
+
+// Main flow
 (async function main() {
+  // Resolve token: from arg, dry-run placeholder, or interactive hidden read.
   let token = '';
-  if (tokenArg) {
-    token = tokenArg.trim();
-  } else if (dryRun) {
+  if (tokenArg) token = tokenArg.trim();
+  else if (dryRun) {
     token = 'DRY_RUN_TOKEN';
     console.log('ℹ️ dry-run: 使用占位 token，不会写入 Keychain');
   } else {
     token = (await readHidden()).trim();
   }
-  if (!token) {
-    fatal('GitHub Token 不能为空');
-  }
+  if (!token) fatal('GitHub Token 不能为空');
 
+  // Save token to Keychain (unless dry-run)
   if (dryRun) {
     console.log('ℹ️ dry-run: 将要把 token 保存到 macOS Keychain (service: GITHUB_PACKAGES_NPM_TOKEN)');
   } else {
@@ -116,30 +140,18 @@ function confirmPrompt(question) {
       process.exit(0);
     }
     try {
-      execSync(`security add-generic-password -a \"${process.env.USER}\" -s GITHUB_PACKAGES_NPM_TOKEN -w \"${token}\" -U`, { stdio: 'ignore' });
+      execSync(`security add-generic-password -a "${process.env.USER}" -s GITHUB_PACKAGES_NPM_TOKEN -w "${token}" -U`, { stdio: 'ignore' });
       console.log('✅ Token 已保存到 Keychain');
     } catch (e) {
       fatal('保存 Token 到 Keychain 失败, 请检查权限');
     }
   }
 
-  const shellPath = process.env.SHELL || '';
-  const currentShell = path.basename(shellPath);
-  let rcFile = '';
-  if (currentShell === 'zsh') {
-    rcFile = path.join(os.homedir(), '.zshrc');
-  } else if (currentShell === 'bash') {
-    const bashrc = path.join(os.homedir(), '.bashrc');
-    const bashProfile = path.join(os.homedir(), '.bash_profile');
-    if (fs.existsSync(bashrc)) rcFile = bashrc;
-    else rcFile = bashProfile;
-  } else {
-    console.warn('⚠️ 检测到未适配的 shell:', currentShell);
-  }
-
+  const rcFile = detectRcFile();
   if (!rcFile) fatal('检测到未适配的 shell，无法写入配置文件，终止脚本');
 
   try {
+    // Ensure rc file exists
     if (!fs.existsSync(rcFile)) {
       if (dryRun) {
         console.log(`ℹ️ dry-run: 将创建 ${rcFile}`);
@@ -163,14 +175,14 @@ function confirmPrompt(question) {
     } else {
       console.log(`ℹ️  ${rcFile} 已经有相关配置，跳过追加`);
     }
-    // NOTE: don't try to `source` rc file in a separate execSync call above —
+    // NOTE: don't try to `source` rc file in a separate execSync call —
     // each execSync runs in its own subshell so the environment won't persist.
-    // We'll source the rc file in the same shell invocation where we run
-    // `npm whoami` later to ensure `NPM_TOKEN` is available to that command.
+    // We read from Keychain below and inject NPM_TOKEN into the env for npm.
   } catch (e) {
     fatal(`写入 ${rcFile} 失败: ${e.message}`);
   }
 
+  // Prepare ~/.npmrc
   const npmrcPath = path.join(os.homedir(), '.npmrc');
   const npmrcContent = `@${org}:registry=https://npm.pkg.github.com\n//npm.pkg.github.com/:_authToken=\${NPM_TOKEN}\n`;
   if (dryRun) {
@@ -187,6 +199,7 @@ function confirmPrompt(question) {
     }
   }
 
+  // Basic runtime check for NPM_TOKEN in current env
   console.log('🔍 检查 NPM_TOKEN:');
   if (process.env.NPM_TOKEN) {
     console.log(`🔍 NPM_TOKEN 已成功加载（长度：${process.env.NPM_TOKEN.length}）`);
@@ -200,15 +213,13 @@ function confirmPrompt(question) {
     process.exit(0);
   }
 
+  // Validate by reading token from Keychain (preferred) or env and running `npm whoami`.
   try {
-    // Prefer reading the token directly from macOS Keychain and inject it
-    // into the environment for npm. This avoids depending on `source` and
-    // works regardless of the user's shell (zsh, bash, fish, etc.).
     let keychainToken = '';
     try {
       keychainToken = execSync(`security find-generic-password -a "${process.env.USER}" -s GITHUB_PACKAGES_NPM_TOKEN -w`, { encoding: 'utf8', stdio: ['pipe', 'pipe', 'ignore'] }).trim();
     } catch (ke) {
-      // If we can't read from Keychain, fall back to process.env.NPM_TOKEN
+      // Fallback to environment variable
       keychainToken = process.env.NPM_TOKEN || '';
     }
 
@@ -223,10 +234,9 @@ function confirmPrompt(question) {
       console.log(`✅ npm 登录验证成功，用户名: ${result}`);
       console.log('\n⚠️  如果你在非交互式终端运行脚本，可能需要手动运行: source ~/.zshrc \n   或重新启动终端以便在交互 shell 中使用 NPM_TOKEN');
       process.exit(0);
-    } else {
-      console.error('❌ 登录验证失败，请检查 token 是否正确');
-      process.exit(1);
     }
+    console.error('❌ 登录验证失败，请检查 token 是否正确');
+    process.exit(1);
   } catch (e) {
     console.error('❌ 登录验证失败，请检查 token 是否正确');
     if (e.stdout || e.stderr) {
