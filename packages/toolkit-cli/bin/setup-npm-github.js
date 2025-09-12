@@ -209,25 +209,82 @@ async function setupRcFile() {
 
 // Setup .npmrc file
 function setupNpmrc() {
-  const npmrcPath = path.join(os.homedir(), '.npmrc');
-  const npmrcContent = `@${org}:registry=https://npm.pkg.github.com\n//npm.pkg.github.com/:_authToken=\${NPM_TOKEN}\n`;
+  const homeDir = os.homedir();
+  const npmrcPath = path.join(homeDir, '.npmrc');
+  const npmrcLines = [
+    `@${org}:registry=https://npm.pkg.github.com`,
+    `//npm.pkg.github.com/:_authToken=\${NPM_TOKEN}`
+  ];
+  const npmrcContent = npmrcLines.join('\n') + '\n';
   
   if (dryRun) {
     console.log('ℹ️ dry-run: 将写入 ~/.npmrc，内容如下:');
     console.log('---');
     console.log(npmrcContent);
     console.log('---');
-  } else {
-    try {
-      // Check if home directory is writable
-      const homeDir = os.homedir();
-      fs.accessSync(homeDir, fs.constants.W_OK);
-      
+    return;
+  }
+  
+  try {
+    // Check if home directory is writable
+    fs.accessSync(homeDir, fs.constants.W_OK);
+    
+    // If .npmrc doesn't exist, create it with full content
+    if (!fs.existsSync(npmrcPath)) {
       fs.writeFileSync(npmrcPath, npmrcContent, { encoding: 'utf8' });
-      console.log('✅ 已写入 ~/.npmrc');
-    } catch (e) {
-      fatal(`写入 ~/.npmrc 失败: ${e.message}`);
+      console.log('✅ 已创建并写入 ~/.npmrc');
+      return;
     }
+    
+    // If .npmrc exists, check content and update only if necessary
+    const existingContent = fs.readFileSync(npmrcPath, 'utf8');
+    const existingLines = existingContent.split('\n').filter(line => line.trim() !== '');
+    
+    // Check if there's any GitHub Packages registry configuration with a different org
+    const githubRegistryPattern = /^@([^:]+):registry=https:\/\/npm\.pkg\.github\.com/;
+    const authTokenLine = `//npm.pkg.github.com/:_authToken=\${NPM_TOKEN}`;
+    const registryLine = `@${org}:registry=https://npm.pkg.github.com`;
+    
+    let hasRegistryLine = false;
+    let hasAuthTokenLine = false;
+    
+    const filteredLines = existingLines.filter(line => {
+      const registryMatch = line.match(githubRegistryPattern);
+      if (registryMatch) {
+        hasRegistryLine = true;
+        // Remove all registry lines, we'll add the correct one later
+        return false;
+      }
+      
+      // Check for authToken line - remove any line that starts with the pattern
+      if (line.startsWith('//npm.pkg.github.com/:_authToken=')) {
+        hasAuthTokenLine = true;
+        // Remove all authToken lines, we'll add the correct one later
+        return false;
+      }
+      
+      // Keep all other lines
+      return true;
+    });
+    
+    // Check if we already have the exact lines we want to add
+    const hasCorrectRegistry = existingLines.includes(registryLine);
+    const hasCorrectAuthToken = existingLines.includes(authTokenLine);
+    
+    // If we have the correct configuration already, skip update
+    if (hasCorrectRegistry && hasCorrectAuthToken) {
+      console.log('ℹ️  ~/.npmrc 已经包含正确的配置，跳过更新');
+      return;
+    }
+    
+    // Add our configuration lines
+    const updatedLines = [...filteredLines, ...npmrcLines];
+    const updatedContent = updatedLines.join('\n') + '\n';
+    
+    fs.writeFileSync(npmrcPath, updatedContent, { encoding: 'utf8' });
+    console.log('✅ 已更新 ~/.npmrc');
+  } catch (e) {
+    fatal(`处理 ~/.npmrc 失败: ${e.message}`);
   }
 }
 
