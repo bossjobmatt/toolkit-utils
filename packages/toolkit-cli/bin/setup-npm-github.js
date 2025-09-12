@@ -209,8 +209,7 @@ async function setupRcFile() {
 
 // Setup .npmrc file
 function setupNpmrc() {
-  const homeDir = os.homedir();
-  const npmrcPath = path.join(homeDir, '.npmrc');
+  const npmrcPath = path.join(os.homedir(), '.npmrc');
   const npmrcLines = [
     `@${org}:registry=https://npm.pkg.github.com`,
     `//npm.pkg.github.com/:_authToken=\${NPM_TOKEN}`
@@ -227,6 +226,7 @@ function setupNpmrc() {
   
   try {
     // Check if home directory is writable
+    const homeDir = os.homedir();
     fs.accessSync(homeDir, fs.constants.W_OK);
     
     // If .npmrc doesn't exist, create it with full content
@@ -240,26 +240,19 @@ function setupNpmrc() {
     const existingContent = fs.readFileSync(npmrcPath, 'utf8');
     const existingLines = existingContent.split('\n').filter(line => line.trim() !== '');
     
-    // Check if there's any GitHub Packages registry configuration with a different org
     const githubRegistryPattern = /^@([^:]+):registry=https:\/\/npm\.pkg\.github\.com/;
     const authTokenLine = `//npm.pkg.github.com/:_authToken=\${NPM_TOKEN}`;
     const registryLine = `@${org}:registry=https://npm.pkg.github.com`;
     
-    let hasRegistryLine = false;
-    let hasAuthTokenLine = false;
-    
+    // Filter out existing GitHub Packages configurations
     const filteredLines = existingLines.filter(line => {
-      const registryMatch = line.match(githubRegistryPattern);
-      if (registryMatch) {
-        hasRegistryLine = true;
-        // Remove all registry lines, we'll add the correct one later
+      // Remove all registry lines
+      if (githubRegistryPattern.test(line)) {
         return false;
       }
       
-      // Check for authToken line - remove any line that starts with the pattern
+      // Remove all authToken lines
       if (line.startsWith('//npm.pkg.github.com/:_authToken=')) {
-        hasAuthTokenLine = true;
-        // Remove all authToken lines, we'll add the correct one later
         return false;
       }
       
