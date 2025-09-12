@@ -5,13 +5,15 @@
   "main": "index.js",
   "files": [
     "index.js",
-    "README.md"
+    "README.md",
+    "bin/setup-npm-github.js"
   ],
   "bin": {
-    "toolkit": "index.js"
+    "toolkit": "index.js",
+    "setup-npm-github": "bin/setup-npm-github.js"
   },
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "node ./test/test-smoke.js"
   },
   "repository": {
     "url": "https://github.com/bossjobmatt/toolkit-utils.git"
