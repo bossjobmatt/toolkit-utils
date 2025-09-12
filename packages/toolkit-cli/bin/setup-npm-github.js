@@ -9,6 +9,8 @@ const path = require('path');
 // Constants
 const ORG_DEFAULT = 'yolotechnology';
 const KEYCHAIN_SERVICE = 'GITHUB_PACKAGES_NPM_TOKEN';
+const KEYCHAIN_LOADER_SCRIPT = `# Load GitHub Packages token from macOS Keychain
+export NPM_TOKEN="$(security find-generic-password -a "$USER" -s ${KEYCHAIN_SERVICE} -w 2>/dev/null)"`;
 
 // Fatal error helper: prints a message and exits with non-zero status.
 function fatal(msg) {
@@ -153,6 +155,12 @@ function saveTokenToKeychain(token) {
   }
 }
 
+// Check if RC file already contains the keychain loader script
+function hasKeychainLoader(rcContent) {
+  // Check for the keychain service name or a significant part of the script
+  return rcContent.includes(KEYCHAIN_SERVICE) && rcContent.includes('security find-generic-password');
+}
+
 // Setup shell rc file for dynamic token loading
 async function setupRcFile() {
   const rcFile = detectRcFile();
@@ -164,15 +172,23 @@ async function setupRcFile() {
       if (dryRun) {
         console.log(`ℹ️ dry-run: 将创建 ${rcFile}`);
       } else {
-        fs.mkdirSync(path.dirname(rcFile), { recursive: true });
+        // Check if parent directory exists and is writable
+        const rcDir = path.dirname(rcFile);
+        if (!fs.existsSync(rcDir)) {
+          try {
+            fs.mkdirSync(rcDir, { recursive: true });
+          } catch (mkdirError) {
+            fatal(`无法创建目录 ${rcDir}: ${mkdirError.message}`);
+          }
+        }
         fs.writeFileSync(rcFile, '');
         console.log(`ℹ️ 未找到 ${rcFile}，已自动创建`);
       }
     }
 
     const rcContent = fs.existsSync(rcFile) ? fs.readFileSync(rcFile, 'utf8') : '';
-    if (!rcContent.includes(KEYCHAIN_SERVICE)) {
-      const loader = `\n# Load GitHub Packages token from macOS Keychain\nexport NPM_TOKEN="$(security find-generic-password -a \"$USER\" -s ${KEYCHAIN_SERVICE} -w 2>/dev/null)"\n`;
+    if (!hasKeychainLoader(rcContent)) {
+      const loader = `\n${KEYCHAIN_LOADER_SCRIPT}\n`;
       if (dryRun) {
         console.log(`ℹ️ dry-run: 将在 ${rcFile} 追加动态加载 NPM_TOKEN: `);
         console.log(loader);
@@ -203,6 +219,10 @@ function setupNpmrc() {
     console.log('---');
   } else {
     try {
+      // Check if home directory is writable
+      const homeDir = os.homedir();
+      fs.accessSync(homeDir, fs.constants.W_OK);
+      
       fs.writeFileSync(npmrcPath, npmrcContent, { encoding: 'utf8' });
       console.log('✅ 已写入 ~/.npmrc');
     } catch (e) {
