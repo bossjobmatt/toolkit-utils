@@ -240,14 +240,13 @@ function setupNpmrc() {
     const existingContent = fs.readFileSync(npmrcPath, 'utf8');
     const existingLines = existingContent.split('\n').filter(line => line.trim() !== '');
     
-    const githubRegistryPattern = /^@([^:]+):registry=https:\/\/npm\.pkg\.github\.com/;
     const authTokenLine = `//npm.pkg.github.com/:_authToken=\${NPM_TOKEN}`;
     const registryLine = `@${org}:registry=https://npm.pkg.github.com`;
     
     // Filter out existing GitHub Packages configurations
     const filteredLines = existingLines.filter(line => {
       // Remove all registry lines
-      if (githubRegistryPattern.test(line)) {
+      if (line.endsWith(':registry=https://npm.pkg.github.com')) {
         return false;
       }
       
