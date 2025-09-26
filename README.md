@@ -22,3 +22,5 @@ npm install @bossjobmatt/toolkit-utils@1.0.4
 ```bash
 npm install @bossjobmatt/toolkit-cli@1.0.0
 ```
+
+## other
