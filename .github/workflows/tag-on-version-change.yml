@@ -23,10 +23,10 @@ jobs:
           echo "Current version: $VERSION"
 
           if git tag --list "v$VERSION" | grep -q "^v$VERSION$"; then
-            echo "Tag v$VERSION already exists"
+            echo "⚠️ Tag v$VERSION already exists"
             echo "exists=true" >> $GITHUB_OUTPUT
           else
-            echo "Tag v$VERSION does not exist"
+            echo "⚠️ Tag v$VERSION does not exist"
             echo "exists=false" >> $GITHUB_OUTPUT
           fi
           echo "version=$VERSION" >> $GITHUB_OUTPUT
@@ -37,6 +37,9 @@ jobs:
         run: |
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
-          git tag -a v${{ steps.version_check.outputs.version }} -m "Release v${{ steps.version_check.outputs.version }}"
+
+          CHANGELOG=$(npx changelogen@latest)
+
+          git tag -a v${{ steps.version_check.outputs.version }} -m "Release v${{ steps.version_check.outputs.version }}\n\n$CHANGELOG"
           git push origin v${{ steps.version_check.outputs.version }}
           echo "✅ Successfully created and pushed tag v${{ steps.version_check.outputs.version }}"
