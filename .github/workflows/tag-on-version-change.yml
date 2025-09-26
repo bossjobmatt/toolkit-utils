@@ -41,6 +41,6 @@ jobs:
 
           CHANGELOG=$(npx changelogen@latest)
 
-          git tag -a v${{ steps.version_check.outputs.version }} -m "Release v${{ steps.version_check.outputs.version }}\n\n$CHANGELOG"
+          git tag -a v${{ steps.version_check.outputs.version }} -m "Release v${{ steps.version_check.outputs.version }} $CHANGELOG"
           git push origin v${{ steps.version_check.outputs.version }}
           echo "✅ Successfully created and pushed tag v${{ steps.version_check.outputs.version }}"
