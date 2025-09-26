@@ -38,9 +38,6 @@ jobs:
         run: |
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
-
-          CHANGELOG=$(npx changelogen@latest)
-
-          git tag -a v${{ steps.version_check.outputs.version }} -m "Release v${{ steps.version_check.outputs.version }} $CHANGELOG"
+          git tag -a v${{ steps.version_check.outputs.version }} -m "Release v${{ steps.version_check.outputs.version }}"
           git push origin v${{ steps.version_check.outputs.version }}
           echo "✅ Successfully created and pushed tag v${{ steps.version_check.outputs.version }}"
