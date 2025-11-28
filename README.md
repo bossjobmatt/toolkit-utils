@@ -13,15 +13,10 @@
 
 ## Usage
 
-- 1.install toolkit-utils
 
 ```bash
 npm install @bossjobmatt/toolkit-utils@1.0.4
-```
 
-- 2.install toolkit-cli
-
-```bash
 npm install @bossjobmatt/toolkit-cli@1.0.0
 ```
 
